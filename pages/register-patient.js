@@ -97,7 +97,27 @@ class RegisterPatient extends Component {
     this.setState({ loading: true, errorMessage: "" });
 
     try {
-      // Gọi API để lưu thông tin vào MySQL
+      // Gửi lên blockchain trước
+      const accounts = await web3.eth.getAccounts();
+      await record.methods
+        .setDetails(
+          ic,
+          name,
+          phone,
+          gender,
+          dob,
+          height,
+          weight,
+          houseaddr,
+          bloodgroup,
+          allergies,
+          medication,
+          emergencyName,
+          emergencyContact
+        )
+        .send({ from: accounts[0] });
+
+      // Nếu thành công, tiếp tục lưu vào MySQL
       const response = await fetch("http://localhost:5000/register-patient", {
         method: "POST",
         headers: {
@@ -125,11 +145,11 @@ class RegisterPatient extends Component {
         alert("Account created successfully!");
         Router.pushRoute("/list");
       } else {
-        throw new Error("Failed to save data");
+        throw new Error("Failed to save data to MySQL");
       }
     } catch (err) {
       this.setState({ errorMessage: err.message });
-      alert("Account already exists");
+      alert("Account already exists or failed to process");
     }
 
     this.setState({ loading: false });
